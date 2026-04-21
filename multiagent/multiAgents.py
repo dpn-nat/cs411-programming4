@@ -73,8 +73,35 @@ class ReflexAgent(Agent):
         newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
-        "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        score = successorGameState.getScore()
+
+        # --- FOOD ---
+        foodList = newFood.asList()
+        if len(foodList) > 0:
+            distances = [manhattanDistance(newPos, food) for food in foodList]
+            minFoodDist = min(distances)
+            score += 1.0 / (minFoodDist + 1)
+
+        # --- GHOSTS ---
+        for i, ghost in enumerate(newGhostStates):
+            ghostPos = ghost.getPosition()
+            dist = manhattanDistance(newPos, ghostPos)
+
+            if newScaredTimes[i] > 0:
+                # Chase scared ghost
+                score += 2.0 / (dist + 1)
+            else:
+                # Avoid active ghost
+                if dist < 2:
+                    score -= 100  # very dangerous
+                else:
+                    score -= 1.0 / (dist + 1)
+
+        # --- STOP penalty ---
+        if action == Directions.STOP:
+            score -= 5
+
+        return score
 
 def scoreEvaluationFunction(currentGameState):
     """
@@ -135,7 +162,56 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        numAgents = gameState.getNumAgents()
+
+        def minimax(state, agentIndex, depth):
+            # Terminal condition
+            if depth == self.depth or state.isWin() or state.isLose():
+                return self.evaluationFunction(state)
+
+            # Pacman (MAX)
+            if agentIndex == 0:
+                value = float('-inf')
+                actions = state.getLegalActions(agentIndex)
+
+                for action in actions:
+                    successor = state.generateSuccessor(agentIndex, action)
+                    value = max(value, minimax(successor, 1, depth))
+
+                return value
+
+            # Ghosts (MIN)
+            else:
+                value = float('inf')
+                actions = state.getLegalActions(agentIndex)
+
+                nextAgent = agentIndex + 1
+                nextDepth = depth
+
+                # If last ghost → go to Pacman and increase depth
+                if nextAgent == numAgents:
+                    nextAgent = 0
+                    nextDepth += 1
+
+                for action in actions:
+                    successor = state.generateSuccessor(agentIndex, action)
+                    value = min(value, minimax(successor, nextAgent, nextDepth))
+
+                return value
+
+        # Root: choose best action for Pacman
+        bestScore = float('-inf')
+        bestAction = None
+
+        for action in gameState.getLegalActions(0):
+            successor = gameState.generateSuccessor(0, action)
+            score = minimax(successor, 1, 0)
+
+            if score > bestScore:
+                bestScore = score
+                bestAction = action
+
+        return bestAction
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
