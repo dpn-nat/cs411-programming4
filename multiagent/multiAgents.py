@@ -232,7 +232,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
             if agenInd == 0:
                 # this is to start with a very low value
-                valu = float('-inf')
+                valu = -1000000000
 
                 
                 for act in acts:    
@@ -251,7 +251,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
             else:
                 # this starts with a very high value
-                valu = float('inf')
+                valu = 1000000000
 
                 # this moves to the next agent
                 nexAget = agenInd + 1
@@ -277,10 +277,10 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
                 return valu
 
-        alph = float('-inf')
-        bet = float('inf')
+        alph = -1000000000
+        bet = 1000000000
         # thsi tracks the best score and the best action
-        besScor = float('-inf')
+        besScor = -1000000000
         besAction = None
         
         # this is to loop through all the pacman actions
