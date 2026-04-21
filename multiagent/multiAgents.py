@@ -223,7 +223,87 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #  this is for the total number of agents (pacman + ghosts)
+        numAgents = gameState.getNumAgents()
+
+        # this is the recursive helper function
+        def helper(stat, agenInd, dept, alph, bet):
+            # the base case is to stop if we hit depth limit or win/lose state
+            if dept == self.depth or stat.isWin() or stat.isLose():
+                return self.evaluationFunction(stat)
+
+            # this is to get all the possible actions for the agent
+            acts = stat.getLegalActions(agenInd)
+
+            if agenInd == 0:
+                # this is to start with a very low value
+                valu = float('-inf')
+
+                
+                for act in acts:    
+                    # this is to generate the next state
+                    successor = stat.generateSuccessor(agenInd, act)
+                    # this is to call the helper for the next agent (ghotst)
+                    valu = max(valu, helper(successor, 1, dept, alph, bet))
+
+                    if valu > bet:
+                        return valu
+                    
+                    # this updates alpha
+                    alph = max(alph, valu)
+
+                return valu
+
+            else:
+                # this starts with a very high value
+                valu = float('inf')
+
+                # this moves to the next agent
+                nexAget = agenInd + 1
+                nexDept = dept
+
+                # if it is the last ghost then it would go back to pacman and increase the depth
+                if nexAget == numAgents:
+                    nexAget = 0
+                    nexDept += 1
+
+                for act in acts:
+                    # this generates the next state
+                    successor = stat.generateSuccessor(agenInd, act)
+                    # this is the recursive call
+                    valu = min(valu, helper(successor, nexAget, nexDept, alph, bet))
+
+                    # if the value is already worse than alpha, then it would keep exploring
+                    if valu < alph:
+                        return valu
+
+                    # this updates the beta
+                    bet = min(bet, valu)
+
+                return valu
+
+        alph = float('-inf')
+        bet = float('inf')
+        # thsi tracks the best score and the best action
+        besScor = float('-inf')
+        besAction = None
+        
+        # this is to loop through all the pacman actions
+        for act in gameState.getLegalActions(0):
+            # this generates the next state
+            successor = gameState.generateSuccessor(0, act)
+            scor = helper(successor, 1, 0, alph, bet)
+
+            # updates the best action if a better score is found
+            if scor > besScor:
+                besScor = scor
+                besAction = act
+
+            # this updates the alpha at the root
+            alph = max(alph, besScor)
+
+        # this returns the best move
+        return besAction
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
